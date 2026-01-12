@@ -15,98 +15,112 @@
 #include <memory>
 #include <string>
 
+bool ReadFirstPoseRBOTDataset(const std::filesystem::path &path,
+                          rbgt::Transform3fA &pose) 
+{
+  std::ifstream ifs;
+  ifs.open(path.string(), std::ios::binary);
+  if (!ifs.is_open() || ifs.fail()) {
+    ifs.close();
+    std::cerr << "Could not open file stream " << path.string() << std::endl;
+    return false;
+  }
+
+  std::string parsed;
+  std::getline(ifs, parsed);
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      std::getline(ifs, parsed, '\t');
+      pose.matrix()(i, j) = stof(parsed);
+    }
+  }
+  std::getline(ifs, parsed, '\t');
+  pose.matrix()(0, 3) = stof(parsed) * 0.001f;
+  std::getline(ifs, parsed, '\t');
+  pose.matrix()(1, 3) = stof(parsed) * 0.001f;
+  std::getline(ifs, parsed);
+  pose.matrix()(2, 3) = stof(parsed) * 0.001f;
+
+  return true;
+}
+
 int main() {
-  // Change accordingly
-  const std::string model_path{"/home/vic/code/3DObjectTracking/data/RBOT_dataset/"};
 
-  constexpr bool kSaveViewerImage = false;
-  const std::string viewer_save_path{"/home/vic/code/3DObjectTracking/data/viewer_images"};
+  rbgt::Transform3fA reset_pose;
+  if (!ReadFirstPoseRBOTDataset("/home/vic/code/3DObjectTracking/data/RBOT_dataset/poses_first.txt", reset_pose))
+    return false;
 
-  // Set up tracker and renderer geometry
   auto tracker_ptr{std::make_shared<rbgt::Tracker>()};
   auto renderer_geometry_ptr{std::make_shared<rbgt::RendererGeometry>()};
 
-  // Set up camera
-  // auto camera_ptr{std::make_shared<rbgt::OpenCVCamera>("OpenCV Camera", 0)};
-  // camera_ptr->Init();
-  auto camera_ptr = std::make_shared<rbgt::DatasetRBOTCamera>();
-  camera_ptr->Init("camera", "/home/vic/code/3DObjectTracking/data/RBOT_dataset/", "ape", "c_noisy", 0);
+  auto camera_ptr{std::make_shared<rbgt::OpenCVCamera>("OpenCV Camera", 0)};
+  camera_ptr->Init();
 
-  // Set up viewers
-  auto viewer_ptr{std::make_shared<rbgt::NormalImageViewer>()};
+  auto viewer_ptr = std::make_shared<rbgt::NormalImageViewer>();
   viewer_ptr->Init("viewer", renderer_geometry_ptr, camera_ptr);
-  if (kSaveViewerImage) viewer_ptr->StartSavingImages(viewer_save_path);
+
   tracker_ptr->AddViewer(viewer_ptr);
+  tracker_ptr->set_visualization_time(1);
 
-  // Set up body1 (change accordingly)
-  const std::string body1_geometry_path{"/home/vic/code/3DObjectTracking/data/RBOT_dataset/ape/ape.obj"};
-  rbgt::Transform3fA body1_geometry2body_pose{
-      Eigen::Translation3f(0.0f, 0.0f, 0.0f)};
-  rbgt::Transform3fA body1_world2body_pose;
-  body1_world2body_pose.matrix() << 
-      0.997056, -0.04307, 0.0634383, 19.051,
-      0.043157, 0.999068, 0, 4.08901,
-      -0.0633792, 0.0027378, 0.997986, 549,
-      0.0f, 0.0f, 0.0f, 1.0f;
-  auto body1_ptr{std::make_shared<rbgt::Body>("ape", body1_geometry_path,
-                                              1.0f, true, true, 0.1f,
-                                              body1_geometry2body_pose)};
-  body1_ptr->set_world2body_pose(body1_world2body_pose);
-  body1_ptr->set_occlusion_mask_id(1);
-  renderer_geometry_ptr->AddBody(body1_ptr);
+  auto body_ptr = std::make_shared<rbgt::Body>(
+    "body", 
+    "/home/vic/code/3DObjectTracking/data/RBOT_dataset/ape/ape.obj", 
+    0.001f,
+    true, 
+    false, 
+    0.3f
+  );
+  renderer_geometry_ptr->ClearBodies();
+  renderer_geometry_ptr->AddBody(body_ptr);
 
-  // Set up model body 1
-  const std::string body1_model_name{"ape/ape_model"};
-  auto body1_model_ptr{std::make_shared<rbgt::Model>(body1_model_name)};
-  if (!body1_model_ptr->LoadModel(model_path, body1_model_name)) {
-    body1_model_ptr->GenerateModel(*body1_ptr, 0.8f, 4, 200);
-    body1_model_ptr->SaveModel(model_path, body1_model_name);
+  auto model_ptr = std::make_shared<rbgt::Model>("model");
+  if (!model_ptr->LoadModel(".", "ape_model")) {
+    model_ptr->GenerateModel(
+      *body_ptr, 
+      0.8f, //sphere_radius_
+      4, //n_divides_
+      200 //n_points_
+    );
+    model_ptr->SaveModel(".", "ape_model");
   }
 
-  // Set up region modality body 1
-  auto body1_region_modality_ptr{std::make_shared<rbgt::RegionModality>()};
-  body1_region_modality_ptr->Init("body1_region_modality", body1_ptr,
-                                  body1_model_ptr, camera_ptr);
-  tracker_ptr->AddRegionModality(body1_region_modality_ptr);
+  auto region_modality_ptr = std::make_shared<rbgt::RegionModality>();
+  region_modality_ptr->Init(
+    "region_modality", 
+    body_ptr, 
+    model_ptr,
+    camera_ptr);
 
-  // Set up body2 (change accordingly)
-  const std::string body2_geometry_path{"/home/vic/code/3DObjectTracking/data/RBOT_dataset/bakingsoda/bakingsoda.obj"};
-  rbgt::Transform3fA body2_geometry2body_pose{
-      Eigen::Translation3f(0.0f, 0.0f, 0.0f)};
-  rbgt::Transform3fA body2_world2body_pose;
-  body2_world2body_pose.matrix() << -0.999495f, -0.0298023f, -0.0120959f,
-      0.108489f, -0.0319917f, 0.88242f, 0.469534f, -0.155606f, -0.00332271f,
-      0.469629f, -0.882873f, 0.416361f, 0.0f, 0.0f, 0.0f, 1.0f;
-  auto body2_ptr{std::make_shared<rbgt::Body>("bakingsoda", body2_geometry_path,
-                                              1.0f, true, true, 0.1f,
-                                              body2_geometry2body_pose)};
-  body2_ptr->set_world2body_pose(body2_world2body_pose);
-  body2_ptr->set_occlusion_mask_id(2);
-  renderer_geometry_ptr->AddBody(body2_ptr);
+  tracker_ptr->AddRegionModality(region_modality_ptr);
 
-  // Set up model body 2
-  const std::string body2_model_name{"bakingsoda/bakingsoda_model"};
-  auto body2_model_ptr{std::make_shared<rbgt::Model>(body2_model_name)};
-  if (!body2_model_ptr->LoadModel(model_path, body2_model_name)) {
-    body2_model_ptr->GenerateModel(*body2_ptr, 0.8f, 4, 200);
-    body2_model_ptr->SaveModel(model_path, body2_model_name);
+  body_ptr->set_body2world_pose(reset_pose);
+  region_modality_ptr->StartModality();
+  region_modality_ptr->set_visualize_points_pose_update(true);
+
+  tracker_ptr->SetUpObjects();
+
+  while(1)
+  {
+    tracker_ptr->CalculateBeforeCameraUpdate();
+    tracker_ptr->UpdateCameras();
+
+    for (int corr_iteration = 0; corr_iteration < 7; ++corr_iteration) 
+    {
+      //std::cout<<"corr_iteration: " << corr_iteration << std::endl;
+      tracker_ptr->CalculateCorrespondences(corr_iteration);
+
+      int corr_save_idx = corr_iteration;
+      tracker_ptr->VisualizeCorrespondences(corr_save_idx);
+
+      for (int update_iteration = 0; update_iteration < 2; ++update_iteration) {
+        //std::cout<<"  update_iteration: " << update_iteration << std::endl;
+        tracker_ptr->CalculatePoseUpdate();
+
+        int update_save_idx = corr_save_idx * 2 + update_iteration;
+        tracker_ptr->VisualizePoseUpdate(update_save_idx);
+      }
+    }
   }
-
-  // Set up region modality body 2
-  auto body2_region_modality_ptr{std::make_shared<rbgt::RegionModality>()};
-  body2_region_modality_ptr->Init("body2_region_modality", body2_ptr,
-                                  body2_model_ptr, camera_ptr);
-  tracker_ptr->AddRegionModality(body2_region_modality_ptr);
-
-  // Set up occlusion mask renderer
-  auto occlusion_mask_renderer_ptr{
-      std::make_shared<rbgt::OcclusionMaskRenderer>()};
-  occlusion_mask_renderer_ptr->InitFromCamera(
-      "occlusion_mask_renderer", renderer_geometry_ptr, *camera_ptr);
-  body1_region_modality_ptr->UseOcclusionHandling(occlusion_mask_renderer_ptr);
-  body2_region_modality_ptr->UseOcclusionHandling(occlusion_mask_renderer_ptr);
-
-  // Start tracking
-  tracker_ptr->StartTracker(true);
   return 0;
 }
