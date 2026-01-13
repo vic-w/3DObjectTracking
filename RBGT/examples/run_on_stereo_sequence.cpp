@@ -111,13 +111,13 @@ int main() {
     model_ptr,
     camera_r_ptr);
 
-  //tracker_ptr->AddRegionModality(region_modality_l_ptr);
+  tracker_ptr->AddRegionModality(region_modality_l_ptr);
   tracker_ptr->AddRegionModality(region_modality_r_ptr);
 
   body_ptr->set_body2world_pose(poses[0]);
-  //region_modality_l_ptr->StartModality();
+  region_modality_l_ptr->StartModality();
   region_modality_r_ptr->StartModality();
-  //region_modality_l_ptr->set_visualize_points_pose_update(true);
+  region_modality_l_ptr->set_visualize_points_pose_update(true);
   region_modality_r_ptr->set_visualize_points_pose_update(true);
 
   tracker_ptr->SetUpObjects();
