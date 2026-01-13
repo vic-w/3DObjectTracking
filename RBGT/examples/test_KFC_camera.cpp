@@ -6,7 +6,7 @@
 
 int main() {
     // 1. 实例化，0 通常是笔记本内置摄像头
-    rbgt::KFCStereo stereo("2", "kfc_calib.yml");
+    rbgt::KFCStereo stereo("2", "calib.yaml");
     rbgt::KFCCamera camera_left("left_camera", &stereo, true);
     rbgt::KFCCamera camera_right("right_camera", &stereo, false);
 

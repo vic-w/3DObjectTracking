@@ -55,7 +55,7 @@ int main() {
   auto tracker_ptr{std::make_shared<rbgt::Tracker>()};
   auto renderer_geometry_ptr{std::make_shared<rbgt::RendererGeometry>()};
 
-  rbgt::KFCStereo stereo("2", "kfc_calib.yml");
+  rbgt::KFCStereo stereo("2", "calib.yaml");
   auto camera_l_ptr{std::make_shared<rbgt::KFCCamera>("camera_left", &stereo, true)};
   auto camera_r_ptr{std::make_shared<rbgt::KFCCamera>("camera_right", &stereo, false)};
 
