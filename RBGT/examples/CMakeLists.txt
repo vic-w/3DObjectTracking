@@ -20,5 +20,8 @@ endif()
 add_executable(run_on_opencv_camera_sequence run_on_opencv_camera_sequence.cpp)
 target_link_libraries(run_on_opencv_camera_sequence PUBLIC rbgt)
 
+add_executable(run_on_stereo_sequence run_on_stereo_sequence.cpp)
+target_link_libraries(run_on_stereo_sequence PUBLIC rbgt)
+
 add_executable(test_opencv_camera test_opencv_camera.cpp)
 target_link_libraries(test_opencv_camera PUBLIC rbgt ${OpenCV_LIBS})

@@ -166,9 +166,9 @@ for index, body2world in enumerate(poses):
 
     scene.main_camera_node = camera_left_node  # <--- 关键：指定主相机节点
     image_l, depth_l = r.render(scene)
-    imageio.imwrite('stereo/image_%04d_l.png'%index, image_l)
+    imageio.imwrite('stereo/image_l_%04d.png'%index, image_l)
 
     # --- 渲染 Camera B 的视角 ---
     scene.main_camera_node = camera_right_node  # <--- 关键：切换主相机节点
     image_r, depth_r = r.render(scene)
-    imageio.imwrite('stereo/image_%04d_r.png'%index, image_r)
+    imageio.imwrite('stereo/image_r_%04d.png'%index, image_r)
