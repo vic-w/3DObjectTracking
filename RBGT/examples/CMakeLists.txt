@@ -25,3 +25,7 @@ target_link_libraries(run_on_stereo_sequence PUBLIC rbgt)
 
 add_executable(test_opencv_camera test_opencv_camera.cpp)
 target_link_libraries(test_opencv_camera PUBLIC rbgt ${OpenCV_LIBS})
+
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/)
+add_executable(test_KFC_camera test_KFC_camera.cpp)
+target_link_libraries(test_KFC_camera PUBLIC rbgt ${OpenCV_LIBS} kfc_cpp)
