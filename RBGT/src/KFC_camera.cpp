@@ -9,6 +9,7 @@ int KFCCamera::active_instances_ = 0;
 
 KFCCamera::KFCCamera(const std::string &name, std::string dev_path, bool is_left)
 {
+    name_ = name;
     dev_path_ = dev_path;
     is_left_ = is_left;
     active_instances_++;
@@ -16,6 +17,13 @@ KFCCamera::KFCCamera(const std::string &name, std::string dev_path, bool is_left
 
 bool KFCCamera::Init() 
 {    
+    intrinsics_.fu = 580;
+    intrinsics_.fv = 580;
+    intrinsics_.ppu = 320;
+    intrinsics_.ppv = 240;
+    intrinsics_.width = 853;
+    intrinsics_.height = 480;
+
     std::cout << "Initializing KFCCamera..." << std::endl;
     if (hardware_ptr_ == nullptr) {
         hardware_ptr_ = std::make_shared<SharedHardware>();
@@ -29,6 +37,7 @@ bool KFCCamera::Init()
             return false;
         }
     }
+    initialized_ = true;
     std::cout << "KFCCamera initialized successfully." << std::endl;
     int width = 0, height = 0;
     hardware_ptr_->camera->getResolution(width, height);
@@ -39,17 +48,15 @@ bool KFCCamera::Init()
     if (hardware_ptr_->camera->capture_jpeg(jpeg_buffer.data(), jpeg_size) < 0) {
         return false;
     }
-    std::cout << "抓取到 JPEG 数据，大小：" << jpeg_size << " 字节" << std::endl;
+    //std::cout << "抓取到 JPEG 数据，大小：" << jpeg_size << " 字节" << std::endl;
     return true;
 }
 
 
 bool KFCCamera::UpdateImage() {
-    std::cout << "Updating image for " << (is_left_ ? "left" : "right") << " camera." << std::endl;
+    //std::cout << "Updating image for " << (is_left_ ? "left" : "right") << " camera." << std::endl;
     if (!hardware_ptr_ || !hardware_ptr_->camera) return false;
 
-    // --- 策略：第一个进入此函数的实例负责采集硬件数据 ---
-    // 如果本实例看到的帧号与全局帧号一致，说明这一帧还没被任何人抓取过
     if (is_left_) 
     {
         int width = 0, height = 0;
@@ -66,7 +73,7 @@ bool KFCCamera::UpdateImage() {
         if (hardware_ptr_->camera->capture_jpeg(jpeg_buffer.data(), jpeg_size) < 0) {
             return false;
         }
-        std::cout << "抓取到 JPEG 数据，大小：" << jpeg_size << " 字节" << std::endl;
+        //std::cout << "抓取到 JPEG 数据，大小：" << jpeg_size << " 字节" << std::endl;
         // 2. 解码到共享的 full_frame
         if (jpeg_size > 0) {
             cv::Mat raw_data(1, jpeg_size, CV_8UC1, jpeg_buffer.data());
