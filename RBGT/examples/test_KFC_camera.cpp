@@ -1,21 +1,15 @@
+
 #include <rbgt/KFC_camera.h>
+#include <rbgt/KFC_stereo.h>
 #include <opencv2/highgui.hpp>
 #include <iostream>
 
 int main() {
     // 1. 实例化，0 通常是笔记本内置摄像头
-    rbgt::KFCCamera camera_left("camera_left", "2", true);
-    rbgt::KFCCamera camera_right("camera_right", "2", false);
+    rbgt::KFCStereo stereo("2", "kfc_calib.yml");
+    rbgt::KFCCamera camera_left("left_camera", &stereo, true);
+    rbgt::KFCCamera camera_right("right_camera", &stereo, false);
 
-    // 2. 初始化相机
-    if (!camera_left.Init()) {
-        std::cerr << "错误：无法初始化left摄像头。请检查权限或设备索引。" << std::endl;
-        return -1;
-    }
-    if (!camera_right.Init()) {
-        std::cerr << "错误：无法初始化right摄像头。请检查权限或设备索引。" << std::endl;
-        return -1;
-    }
 
     std::cout << "摄像头已启动。按任意键退出预览窗口。" << std::endl;
 

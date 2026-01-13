@@ -5,7 +5,7 @@ set(SOURCES common.cpp body.cpp renderer_geometry.cpp renderer.cpp
     normal_image_renderer.cpp occlusion_mask_renderer.cpp model.cpp camera.cpp
     image_loader_camera.cpp dataset_rbot_camera.cpp viewer.cpp image_viewer.cpp
     normal_image_viewer.cpp region_modality.cpp tracker.cpp 
-    opencv_camera.cpp KFC_camera.cpp)
+    opencv_camera.cpp KFC_camera.cpp KFC_stereo.cpp)
 if(USE_AZURE_KINECT)
     list(APPEND SOURCES azure_kinect_camera.cpp)
 endif()

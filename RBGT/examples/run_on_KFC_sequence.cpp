@@ -55,11 +55,10 @@ int main() {
   auto tracker_ptr{std::make_shared<rbgt::Tracker>()};
   auto renderer_geometry_ptr{std::make_shared<rbgt::RendererGeometry>()};
 
-  auto camera_l_ptr{std::make_shared<rbgt::KFCCamera>("camera_left", "2", true)};
-  camera_l_ptr->Init();
+  rbgt::KFCStereo stereo("2", "kfc_calib.yml");
+  auto camera_l_ptr{std::make_shared<rbgt::KFCCamera>("camera_left", &stereo, true)};
+  auto camera_r_ptr{std::make_shared<rbgt::KFCCamera>("camera_right", &stereo, false)};
 
-  auto camera_r_ptr{std::make_shared<rbgt::KFCCamera>("camera_right", "2", false)};
-  camera_r_ptr->Init();
   // 设置右相机的 world2camera_pose，将其向右移动 10cm
   rbgt::Transform3fA camera_r_pose = rbgt::Transform3fA::Identity();
   camera_r_pose.translation() = Eigen::Vector3f(-0.1f, 0.0f, 0.0f);  // 向右移动 10cm
